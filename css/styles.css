@@ -461,7 +461,6 @@ button.danger.full:hover { background: rgba(255,107,107,0.1); border-color: var(
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
   }
   .toolbar::-webkit-scrollbar { display: none; }
   .toolbar > * { flex-shrink: 0; }

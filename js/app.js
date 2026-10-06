@@ -235,6 +235,14 @@
 
   const exportBtn = document.getElementById('exportBtn');
   const exportMenu = document.getElementById('exportMenu');
+  // On phones the toolbar is a scroll container, which clips/traps the menu (notably iOS Safari);
+  // rehome the menu on <body> so it can render as a bottom sheet.
+  const exportDropdown = exportMenu.parentElement;
+  function placeExportMenu() {
+    (mobileMQ.matches ? document.body : exportDropdown).appendChild(exportMenu);
+  }
+  placeExportMenu();
+  mobileMQ.addEventListener('change', placeExportMenu);
   exportBtn.addEventListener('click', (e) => { e.stopPropagation(); exportMenu.classList.toggle('open'); });
   document.addEventListener('click', () => exportMenu.classList.remove('open'));
 
