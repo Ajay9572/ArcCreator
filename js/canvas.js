@@ -17,6 +17,7 @@ class ArcCanvas {
     this.selected = null;
     this.view = { scale: 1, tx: 0, ty: 0 };
     this.drag = null;
+    this.pointers = new Map(); // active pointerId -> {x,y} in svg space, for pinch gestures
     this.history = [];
     this.redoStack = [];
     this._idSeq = 0;
@@ -783,10 +784,36 @@ class ArcCanvas {
     this.onChange();
   }
 
+  _pinchMetrics() {
+    const [a, b] = [...this.pointers.values()];
+    return { dist: Math.hypot(a.x - b.x, a.y - b.y) || 1, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2 };
+  }
+
+  _startPinch() {
+    // Abort whatever single-pointer gesture the first finger started.
+    const d = this.drag;
+    if (d) {
+      if (['node', 'group-move', 'group-resize'].includes(d.type)) {
+        if (d.moved) this.onChange();
+        else this.history.pop();
+      }
+      if (d.type === 'connect') {
+        this.tempLine.style.display = 'none';
+        this.nodeLayer.querySelectorAll('.node.drop-target').forEach(el => el.classList.remove('drop-target'));
+      }
+    }
+    const m = this._pinchMetrics();
+    this.drag = { type: 'pinch', lastDist: m.dist, lastMx: m.mx, lastMy: m.my };
+  }
+
   _onPointerDown(e) {
     const target = e.target;
     const p = this._svgPoint(e.clientX, e.clientY);
     const world = this._toWorld(p.x, p.y);
+
+    this.pointers.set(e.pointerId, p);
+    if (this.pointers.size === 2) { this._capturePointer(e.pointerId); this._startPinch(); return; }
+    if (this.pointers.size > 2) return;
 
     const resizeEl = target.closest('.group-resize-handle');
     if (resizeEl) {
@@ -821,8 +848,9 @@ class ArcCanvas {
     const delEl = target.closest('.node-delete');
     if (delEl) {
       const id = delEl.closest('.node').getAttribute('data-id');
-      this.deleteNode(id);
-      return;
+      // On touch the (invisible) delete button must not fire on an unselected node.
+      const armed = e.pointerType !== 'touch' || (this.selected && this.selected.type === 'node' && this.selected.id === id);
+      if (armed) { this.deleteNode(id); return; }
     }
 
     const handleEl = target.closest('.node-handle');
@@ -857,8 +885,19 @@ class ArcCanvas {
   }
 
   _onPointerMove(e) {
-    if (!this.drag) return;
     const p = this._svgPoint(e.clientX, e.clientY);
+    if (this.pointers.has(e.pointerId)) this.pointers.set(e.pointerId, p);
+    if (!this.drag) return;
+
+    if (this.drag.type === 'pinch') {
+      if (this.pointers.size < 2) return;
+      const m = this._pinchMetrics();
+      this.view.tx += m.mx - this.drag.lastMx;
+      this.view.ty += m.my - this.drag.lastMy;
+      this.zoomAt(m.mx, m.my, m.dist / this.drag.lastDist);
+      this.drag.lastDist = m.dist; this.drag.lastMx = m.mx; this.drag.lastMy = m.my;
+      return;
+    }
 
     if (this.drag.type === 'pan') {
       this.view.tx = this.drag.startTx + (p.x - this.drag.startX);
@@ -937,7 +976,12 @@ class ArcCanvas {
   }
 
   _onPointerUp(e) {
+    this.pointers.delete(e.pointerId);
     if (!this.drag) return;
+    if (this.drag.type === 'pinch') {
+      if (this.pointers.size < 2) this.drag = null;
+      return;
+    }
     const p = this._svgPoint(e.clientX, e.clientY);
     const world = this._toWorld(p.x, p.y);
 

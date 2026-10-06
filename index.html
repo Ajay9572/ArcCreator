@@ -2,12 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#1b1e26" />
 <title>ArcCreator — Architecture Diagram Generator</title>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
-<div class="app">
+<div class="app" data-view="canvas">
 
   <header class="topbar">
     <div class="brand">
@@ -70,8 +71,8 @@
     <main class="canvas-wrap">
       <svg id="canvas" class="canvas"></svg>
       <div class="canvas-hint" id="emptyHint">
-        Type a prompt on the left and hit <strong>Generate Diagram</strong> — or click an icon in the palette to start building by hand.<br/>
-        Drag from a node's right-edge dot to draw a connection. Scroll to zoom, drag empty space to pan.
+        Describe your architecture in the prompt panel and hit <strong>Generate Diagram</strong> — or click an icon in the palette to start building by hand.<br/>
+        Drag from a node's right-edge dot to draw a connection. Scroll or pinch to zoom, drag empty space to pan.
       </div>
     </main>
 
@@ -118,6 +119,12 @@
       </div>
     </aside>
   </div>
+
+  <nav class="mobile-nav" id="mobileNav" aria-label="Views">
+    <button data-view="prompt">Create</button>
+    <button data-view="canvas" class="active">Canvas</button>
+    <button data-view="props">Properties</button>
+  </nav>
 
   <footer class="statusbar"><span id="statusText">Ready</span></footer>
 </div>

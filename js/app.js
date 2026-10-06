@@ -15,6 +15,21 @@
   function setStatus(msg) { statusText.textContent = msg; }
   function updateEmptyHint() { emptyHint.classList.toggle('hidden', canvas.nodes.length > 0); }
 
+  /* ---------- mobile view switching ---------- */
+
+  const appEl = document.querySelector('.app');
+  const mobileNav = document.getElementById('mobileNav');
+  const mobileMQ = window.matchMedia('(max-width: 768px)');
+  function setView(view) {
+    appEl.dataset.view = view;
+    mobileNav.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  }
+  function showCanvasOnMobile() { if (mobileMQ.matches) setView('canvas'); }
+  mobileNav.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-view]');
+    if (btn) setView(btn.dataset.view);
+  });
+
   /* ---------- icon palette ---------- */
 
   const paletteEl = document.getElementById('iconPalette');
@@ -28,6 +43,7 @@
     div.addEventListener('click', () => {
       canvas.addNode(m.id);
       setStatus(`Added "${m.label}" — drag it into place.`);
+      showCanvasOnMobile();
     });
     paletteEl.appendChild(div);
   });
@@ -189,6 +205,7 @@
     canvas.fitToView();
     updateEmptyHint();
     setStatus(`Generated ${graph.nodes.length} node(s) and ${graph.edges.length} connection(s).`);
+    showCanvasOnMobile();
   });
 
   /* ---------- toolbar ---------- */
