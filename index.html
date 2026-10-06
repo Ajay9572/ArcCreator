@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ArcCreator — Architecture Diagram Generator</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" class="brand-icon"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="8.5" y="14" width="7" height="7" rx="1.5"/><path d="M6.5 10v2a2 2 0 0 0 2 2h1M17.5 10v2a2 2 0 0 0-2 2h-1"/></svg>
+      <span>ArcCreator</span>
+    </div>
+    <div class="toolbar">
+      <button id="addNodeBtn" class="tbtn" title="Add a generic node">+ Node</button>
+      <button id="autoLayoutBtn" class="tbtn" title="Auto-arrange the diagram">Auto Layout</button>
+      <span class="tsep"></span>
+      <button id="undoBtn" class="tbtn icon" title="Undo (Ctrl+Z)">↶</button>
+      <button id="redoBtn" class="tbtn icon" title="Redo (Ctrl+Y)">↷</button>
+      <span class="tsep"></span>
+      <button id="zoomOutBtn" class="tbtn icon" title="Zoom out">−</button>
+      <span id="zoomLabel" class="zoom-label">100%</span>
+      <button id="zoomInBtn" class="tbtn icon" title="Zoom in">+</button>
+      <button id="fitBtn" class="tbtn" title="Fit diagram to view">Fit</button>
+      <span class="tsep"></span>
+      <div class="dropdown">
+        <button id="exportBtn" class="tbtn">Export ▾</button>
+        <div class="dropdown-menu" id="exportMenu">
+          <button data-export="png">PNG image</button>
+          <button data-export="svg">SVG file</button>
+          <button data-export="json">JSON (diagram data)</button>
+        </div>
+      </div>
+      <button id="importBtn" class="tbtn" title="Import a JSON diagram">Import</button>
+      <input type="file" id="importInput" accept="application/json" hidden />
+      <button id="clearBtn" class="tbtn danger" title="Clear the canvas">Clear</button>
+      <span class="tsep"></span>
+      <button id="themeBtn" class="tbtn icon" title="Toggle light/dark theme">◐</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <aside class="panel prompt-panel">
+      <h2>Describe your architecture</h2>
+      <textarea id="promptInput" placeholder="e.g. A React frontend calls a Node.js API which reads from a PostgreSQL database and caches results in Redis. The API publishes events to a Kafka queue that triggers a notification service."></textarea>
+      <label class="checkbox">
+        <input type="checkbox" id="appendModeToggle" />
+        <span>Add to existing diagram</span>
+      </label>
+      <button id="generateBtn" class="primary">Generate Diagram</button>
+
+      <div class="examples">
+        <span class="examples-label">Try an example</span>
+        <button class="chip" data-example="0">Arrow syntax</button>
+        <button class="chip" data-example="1">Microservice + queue</button>
+        <button class="chip" data-example="2">CDN + storage</button>
+        <button class="chip" data-example="3">Regions &amp; groups</button>
+      </div>
+
+      <p class="hint">Tip: write <code>A -&gt; B -&gt; C</code> for an exact flow (use <code>A -.-&gt; B</code> for a dashed connection), or just describe it in plain English — recognized terms (database, cache, load balancer, API gateway, Redis, Kafka, S3…) get matching icons automatically. Prefix a line with <code>[Name]</code> to enclose it in a labeled region/group box — drag a corner of the box to resize it, or double-click its label to reset to auto-fit. Select any connection to switch it between solid and dashed.</p>
+
+      <h2>Icon palette</h2>
+      <p class="hint">Click an icon to drop it on the canvas.</p>
+      <div class="icon-grid" id="iconPalette"></div>
+    </aside>
+
+    <main class="canvas-wrap">
+      <svg id="canvas" class="canvas"></svg>
+      <div class="canvas-hint" id="emptyHint">
+        Type a prompt on the left and hit <strong>Generate Diagram</strong> — or click an icon in the palette to start building by hand.<br/>
+        Drag from a node's right-edge dot to draw a connection. Scroll to zoom, drag empty space to pan.
+      </div>
+    </main>
+
+    <aside class="panel properties">
+      <h2>Properties</h2>
+      <div id="propsEmpty" class="hint">Select a node or connection on the canvas to edit it.</div>
+
+      <div id="propsNode" class="props-block hidden">
+        <label class="field-label">Label</label>
+        <input type="text" id="nodeLabelInput" maxlength="60" />
+        <label class="field-label">Icon</label>
+        <select id="nodeTypeSelect"></select>
+
+        <label class="field-label">Custom logo (PNG)</label>
+        <div class="logo-row">
+          <div class="logo-preview" id="nodeLogoPreview"></div>
+          <div class="logo-controls">
+            <label class="file-btn">
+              Choose PNG
+              <input type="file" id="nodeLogoInput" accept="image/png" hidden />
+            </label>
+            <button id="removeLogoBtn" class="link-btn hidden">Remove logo</button>
+          </div>
+        </div>
+        <div id="nodeLogoSizeRow" class="hidden">
+          <label class="field-label">Logo size</label>
+          <input type="range" id="nodeLogoScale" min="0.5" max="2" step="0.1" />
+        </div>
+
+        <label class="field-label">Group / Region</label>
+        <input type="text" id="nodeGroupInput" maxlength="40" placeholder="e.g. AWS Region (leave blank for none)" />
+        <button id="deleteNodeBtn" class="danger full">Delete node</button>
+      </div>
+
+      <div id="propsEdge" class="props-block hidden">
+        <label class="field-label">Connection label</label>
+        <input type="text" id="edgeLabelInput" maxlength="40" placeholder="e.g. HTTP, reads from…" />
+        <label class="field-label">Line style</label>
+        <div class="seg-control" id="edgeStyleControl">
+          <button type="button" class="seg-btn active" data-style="solid">Solid</button>
+          <button type="button" class="seg-btn" data-style="dashed">Dashed</button>
+        </div>
+        <button id="deleteEdgeBtn" class="danger full">Delete connection</button>
+      </div>
+    </aside>
+  </div>
+
+  <footer class="statusbar"><span id="statusText">Ready</span></footer>
+</div>
+
+<script src="js/icons.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/canvas.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
