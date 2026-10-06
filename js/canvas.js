@@ -811,6 +811,8 @@ class ArcCanvas {
     const p = this._svgPoint(e.clientX, e.clientY);
     const world = this._toWorld(p.x, p.y);
 
+    // A primary pointer means no other pointer is down; drop any stale entries.
+    if (e.isPrimary) this.pointers.clear();
     this.pointers.set(e.pointerId, p);
     if (this.pointers.size === 2) { this._capturePointer(e.pointerId); this._startPinch(); return; }
     if (this.pointers.size > 2) return;

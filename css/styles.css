@@ -536,3 +536,25 @@ button.danger.full:hover { background: rgba(255,107,107,0.1); border-color: var(
   .tbtn { padding: 7px 8px; font-size: 12.5px; }
   .icon-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ---------- edit shortcut (shown on phones when something is selected) ---------- */
+
+.edit-fab { display: none; }
+@media (max-width: 768px) {
+  .edit-fab:not(.hidden) {
+    display: block;
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 5;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 11px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+    cursor: pointer;
+  }
+}

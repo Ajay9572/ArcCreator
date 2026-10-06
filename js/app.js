@@ -87,7 +87,11 @@
     }
   }
 
+  const editSelBtn = document.getElementById('editSelBtn');
+  editSelBtn.addEventListener('click', () => setView('props'));
+
   canvas.onSelect = (sel) => {
+    editSelBtn.classList.toggle('hidden', !sel);
     propsEmpty.classList.add('hidden');
     propsNode.classList.add('hidden');
     propsEdge.classList.add('hidden');
